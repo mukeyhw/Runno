@@ -1,0 +1,98 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- GUI setup
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.ResetOnSpawn = false
+
+-- ปุ่มวิ่ง
+local runButton = Instance.new("TextButton")
+runButton.Size = UDim2.new(0, 120, 0, 40)
+runButton.Position = UDim2.new(0, 10, 1, -50)
+runButton.Text = "วิ่ง"
+runButton.Font = Enum.Font.SourceSansBold
+runButton.TextSize = 24
+runButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+runButton.TextColor3 = Color3.new(1, 1, 1)
+runButton.Parent = screenGui
+
+-- ปุ่มทะลุกำแพง
+local noclipButton = Instance.new("TextButton")
+noclipButton.Size = UDim2.new(0, 120, 0, 40)
+noclipButton.Position = UDim2.new(0, 10, 1, -100)
+noclipButton.Text = "ทะลุกำแพง"
+noclipButton.Font = Enum.Font.SourceSansBold
+noclipButton.TextSize = 22
+noclipButton.BackgroundColor3 = Color3.fromRGB(180, 100, 70)
+noclipButton.TextColor3 = Color3.new(1, 1, 1)
+noclipButton.Parent = screenGui
+
+-- ระบบวิ่ง
+local normalSpeed = 16
+local fastSpeed = 50
+local isRunning = false
+
+runButton.MouseButton1Click:Connect(function()
+	character = player.Character or player.CharacterAdded:Wait()
+	humanoid = character:WaitForChild("Humanoid")
+
+	isRunning = not isRunning
+
+	if isRunning then
+		humanoid.WalkSpeed = fastSpeed
+		runButton.Text = "เดิน"
+	else
+		humanoid.WalkSpeed = normalSpeed
+		runButton.Text = "วิ่ง"
+	end
+end)
+
+-- ระบบทะลุกำแพง (NoClip)
+local isNoclip = false
+
+noclipButton.MouseButton1Click:Connect(function()
+	isNoclip = not isNoclip
+	noclipButton.Text = isNoclip and "เลิกทะลุ" or "ทะลุกำแพง"
+end)
+
+-- ตรวจจับและทะลุเฉพาะตอนเปิดใช้งาน
+RunService.Stepped:Connect(function()
+	if isNoclip then
+		local char = player.Character
+		if char then
+			for _, part in pairs(char:GetDescendants()) do
+				if part:IsA("BasePart") and not part.Anchored then
+					part.CanCollide = false
+				end
+			end
+		end
+	end
+end)
+
+-- รีเซ็ตการชนเมื่อปิด noclip หรือตัวละครใหม่
+local function resetCollisions()
+	local char = player.Character
+	if char then
+		for _, part in pairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = true
+			end
+		end
+	end
+end
+
+player.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid")
+	character = char
+	humanoid = character:WaitForChild("Humanoid")
+	if not isRunning then
+		humanoid.WalkSpeed = normalSpeed
+	end
+	if not isNoclip then
+		resetCollisions()
+	end
+end)
