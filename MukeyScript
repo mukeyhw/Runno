@@ -4,7 +4,6 @@ local mouse = player:GetMouse()
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
-local character = player.Character or player.CharacterAdded:Wait()
 
 -- GUI setup
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -78,7 +77,7 @@ mouse.Button1Down:Connect(function()
 		bg:Destroy()
 		blurEffect:Destroy()
 
-		-- ✅ สร้างปุ่ม Speed
+		-- ✅ Speed Button
 		createButton("Speed", UDim2.new(0, 10, 1, -90), function(state)
 			local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 			if hum then
@@ -86,7 +85,7 @@ mouse.Button1Down:Connect(function()
 			end
 		end)
 
-		-- ✅ สร้างปุ่ม NoClip
+		-- ✅ NoClip Button
 		local noClipConnection
 		createButton("NoClip", UDim2.new(0, 10, 1, -140), function(state)
 			if state then
@@ -107,6 +106,15 @@ mouse.Button1Down:Connect(function()
 						part.CanCollide = true
 					end
 				end
+			end
+		end)
+
+		-- ✅ Jump Button
+		createButton("Jump", UDim2.new(0, 10, 1, -190), function(state)
+			local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+			if hum then
+				hum.UseJumpPower = true
+				hum.JumpPower = state and 150 or 50
 			end
 		end)
 	end)
