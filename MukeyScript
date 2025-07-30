@@ -1,98 +1,113 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
 local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
 
 -- GUI setup
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 screenGui.ResetOnSpawn = false
 
--- ปุ่มวิ่ง
-local runButton = Instance.new("TextButton")
-runButton.Size = UDim2.new(0, 120, 0, 40)
-runButton.Position = UDim2.new(0, 10, 1, -50)
-runButton.Text = "วิ่ง"
-runButton.Font = Enum.Font.SourceSansBold
-runButton.TextSize = 24
-runButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
-runButton.TextColor3 = Color3.new(1, 1, 1)
-runButton.Parent = screenGui
+-- เบลอ
+local blurEffect = Instance.new("BlurEffect")
+blurEffect.Size = 0
+blurEffect.Parent = Lighting
 
--- ปุ่มทะลุกำแพง
-local noclipButton = Instance.new("TextButton")
-noclipButton.Size = UDim2.new(0, 120, 0, 40)
-noclipButton.Position = UDim2.new(0, 10, 1, -100)
-noclipButton.Text = "ทะลุกำแพง"
-noclipButton.Font = Enum.Font.SourceSansBold
-noclipButton.TextSize = 22
-noclipButton.BackgroundColor3 = Color3.fromRGB(180, 100, 70)
-noclipButton.TextColor3 = Color3.new(1, 1, 1)
-noclipButton.Parent = screenGui
+-- พื้นหลังดำ
+local bg = Instance.new("Frame")
+bg.Size = UDim2.new(1, 0, 1, 0)
+bg.BackgroundColor3 = Color3.new(0, 0, 0)
+bg.BackgroundTransparency = 1
+bg.Parent = screenGui
 
--- ระบบวิ่ง
-local normalSpeed = 16
-local fastSpeed = 50
-local isRunning = false
+-- ข้อความกลางจอ
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(0.5, 0, 0.2, 0)
+textLabel.Position = UDim2.new(0.25, 0, 0.4, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.TextScaled = true
+textLabel.Text = "MukeyScript"
+textLabel.TextColor3 = Color3.new(1, 1, 1)
+textLabel.Font = Enum.Font.GothamBold
+textLabel.TextTransparency = 1
+textLabel.Parent = screenGui
 
-runButton.MouseButton1Click:Connect(function()
-	character = player.Character or player.CharacterAdded:Wait()
-	humanoid = character:WaitForChild("Humanoid")
-
-	isRunning = not isRunning
-
-	if isRunning then
-		humanoid.WalkSpeed = fastSpeed
-		runButton.Text = "เดิน"
-	else
-		humanoid.WalkSpeed = normalSpeed
-		runButton.Text = "วิ่ง"
-	end
-end)
-
--- ระบบทะลุกำแพง (NoClip)
-local isNoclip = false
-
-noclipButton.MouseButton1Click:Connect(function()
-	isNoclip = not isNoclip
-	noclipButton.Text = isNoclip and "เลิกทะลุ" or "ทะลุกำแพง"
-end)
-
--- ตรวจจับและทะลุเฉพาะตอนเปิดใช้งาน
-RunService.Stepped:Connect(function()
-	if isNoclip then
-		local char = player.Character
-		if char then
-			for _, part in pairs(char:GetDescendants()) do
-				if part:IsA("BasePart") and not part.Anchored then
-					part.CanCollide = false
-				end
-			end
-		end
-	end
-end)
-
--- รีเซ็ตการชนเมื่อปิด noclip หรือตัวละครใหม่
-local function resetCollisions()
-	local char = player.Character
-	if char then
-		for _, part in pairs(char:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = true
-			end
-		end
-	end
+-- ฟังก์ชันสร้างปุ่ม
+local function createButton(name, position, callback)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0, 120, 0, 40)
+	btn.Position = position
+	btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 18
+	btn.Text = name.." : OFF"
+	btn.AutoButtonColor = true
+	btn.Parent = screenGui
+	
+	local state = false
+	btn.MouseButton1Click:Connect(function()
+		state = not state
+		callback(state)
+		btn.Text = name.." : "..(state and "ON" or "OFF")
+	end)
 end
 
-player.CharacterAdded:Connect(function(char)
-	char:WaitForChild("Humanoid")
-	character = char
-	humanoid = character:WaitForChild("Humanoid")
-	if not isRunning then
-		humanoid.WalkSpeed = normalSpeed
-	end
-	if not isNoclip then
-		resetCollisions()
-	end
+-- เมื่อคลิกหน้าจอครั้งแรก
+local clicked = false
+mouse.Button1Down:Connect(function()
+	if clicked then return end
+	clicked = true
+
+	-- Tween In
+	TweenService:Create(blurEffect, TweenInfo.new(0.5), {Size = 24}):Play()
+	TweenService:Create(bg, TweenInfo.new(0.5), {BackgroundTransparency = 0.3}):Play()
+	TweenService:Create(textLabel, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+
+	task.wait(2)
+
+	-- Tween Out
+	TweenService:Create(textLabel, TweenInfo.new(1), {TextTransparency = 1}):Play()
+	TweenService:Create(bg, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
+	TweenService:Create(blurEffect, TweenInfo.new(1), {Size = 0}):Play()
+
+	task.delay(1.2, function()
+		textLabel:Destroy()
+		bg:Destroy()
+		blurEffect:Destroy()
+
+		-- ✅ สร้างปุ่ม Speed
+		createButton("Speed", UDim2.new(0, 10, 1, -90), function(state)
+			local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+			if hum then
+				hum.WalkSpeed = state and 100 or 16
+			end
+		end)
+
+		-- ✅ สร้างปุ่ม NoClip
+		local noClipConnection
+		createButton("NoClip", UDim2.new(0, 10, 1, -140), function(state)
+			if state then
+				noClipConnection = RunService.Stepped:Connect(function()
+					for _, part in pairs(player.Character:GetDescendants()) do
+						if part:IsA("BasePart") and part.CanCollide then
+							part.CanCollide = false
+						end
+					end
+				end)
+			else
+				if noClipConnection then
+					noClipConnection:Disconnect()
+					noClipConnection = nil
+				end
+				for _, part in pairs(player.Character:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = true
+					end
+				end
+			end
+		end)
+	end)
 end)
